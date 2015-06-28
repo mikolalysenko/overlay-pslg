@@ -40,6 +40,7 @@ function dataChanged() {
   computedBlue   = graph.blue
 }
 
+/*
 for(var i=0; i<40; ++i) {
   var theta = i / 20.0 * Math.PI
   var cx = Math.cos(theta) * 0.35
@@ -49,6 +50,28 @@ for(var i=0; i<40; ++i) {
   bluePoints.push([cx+0.4, cy+0.5])
   blueEdges.push([i, (i+1)%40])
 }
+*/
+
+
+redPoints = [
+  [0.5, 0.25],
+  [0.25, 0.5],
+  [0.75, 0.75]
+]
+
+redEdges = [ [0,1], [1,2], [2,0] ]
+
+bluePoints = [
+  [0.25, 0.25],
+  [0.25,  0.6],
+  [0.6, 0.6],
+  [0.6, 0.25]
+]
+
+blueEdges = [ [0,1], [1,2], [2,3], [3,0] ]
+
+operation = 'and'
+
 dataChanged()
 
 var mode = 'red'
@@ -65,7 +88,6 @@ function toggleColor() {
   }
 }
 toggleColor()
-
 
 var OPERATIONS = [
   'xor',
