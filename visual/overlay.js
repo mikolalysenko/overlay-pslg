@@ -6,6 +6,7 @@ var segment2 = require('segment2')
 var mouseChange = require('mouse-change')
 var segCrosses = require('robust-segment-intersect')
 var fit = require('canvas-fit')
+var cdt2d = require('cdt2d')
 
 var overlay = require('../overlay-pslg')
 
@@ -39,11 +40,32 @@ function dataChanged() {
   computedBlue   = graph.blue
 }
 
+for(var i=0; i<40; ++i) {
+  var theta = i / 20.0 * Math.PI
+  var cx = Math.cos(theta) * 0.35
+  var cy = Math.sin(theta) * 0.35
+  redPoints.push([cx+0.6, cy+0.5])
+  redEdges.push([i, (i+1)%40])
+  bluePoints.push([cx+0.4, cy+0.5])
+  blueEdges.push([i, (i+1)%40])
+}
+dataChanged()
+
 var mode = 'red'
 var colorButton = document.createElement('input')
 colorButton.type = 'button'
 colorButton.addEventListener('click', toggleColor)
+optionDiv.appendChild(document.createTextNode('edit:'))
 optionDiv.appendChild(colorButton)
+function toggleColor() {
+  if(mode === 'red') {
+    colorButton.style.color = colorButton.value = mode = 'blue'
+  } else {
+    colorButton.style.color = colorButton.value = mode = 'red'
+  }
+}
+toggleColor()
+
 
 var OPERATIONS = [
   'xor',
@@ -59,6 +81,7 @@ OPERATIONS.forEach(function(op) {
   option.text = option.value = op
   operationSelect.add(option)
 })
+operationP.appendChild(document.createTextNode('op:'))
 operationP.appendChild(operationSelect)
 optionDiv.appendChild(operationP)
 
@@ -66,15 +89,6 @@ operationSelect.addEventListener('change', function() {
   operation = operationSelect.value
   dataChanged()
 })
-
-function toggleColor() {
-  if(mode === 'red') {
-    colorButton.style.color = colorButton.value = mode = 'blue'
-  } else {
-    colorButton.style.color = colorButton.value = mode = 'red'
-  }
-}
-toggleColor()
 
 var resetButton = document.createElement('input')
 resetButton.type = 'button'
@@ -88,7 +102,7 @@ resetP.appendChild(resetButton)
 optionDiv.appendChild(resetP)
 
 var description = document.createElement('p')
-description.innerHTML = 'click to add/remove points<br>drag to add edges<br><a href="https://github.com/mikolalysenko/clean-pslg">Project page</a>'
+description.innerHTML = 'click to add/remove points<br>drag to add edges<br><a href="https://github.com/mikolalysenko/overlay-pslg">Project page</a>'
 optionDiv.appendChild(description)
 
 function edgeDistance(a, b, c) {
@@ -209,6 +223,24 @@ function line(a, b) {
   context.stroke()
 }
 
+function triangle(a, b, c) {
+  var x0 = a[0]-0.5
+  var y0 = a[1]-0.5
+  var x1 = b[0]-0.5
+  var y1 = b[1]-0.5
+  var x2 = c[0]-0.5
+  var y2 = c[1]-0.5
+  var w = canvas.width
+  var h = canvas.height
+  var s = Math.min(w, h)
+  context.beginPath()
+  context.moveTo(s*x0 + w/2, s*y0 + h/2)
+  context.lineTo(s*x1 + w/2, s*y1 + h/2)
+  context.lineTo(s*x2 + w/2, s*y2 + h/2)
+  context.closePath()
+  context.fill()
+}
+
 function circle(x, y, r) {
   var w = canvas.width
   var h = canvas.height
@@ -267,6 +299,16 @@ function draw() {
   context.fillStyle = '#fff'
   context.fillRect(0, 0, w, h)
 
+  var cells = cdt2d(computedPoints, computedRed.concat(computedBlue), { exterior: false })
+  context.fillStyle = 'rgba(0, 255, 0, 0.2)'
+  for(var i=0; i<cells.length; ++i) {
+    var c = cells[i]
+    triangle(
+      computedPoints[c[0]],
+      computedPoints[c[1]],
+      computedPoints[c[2]])
+  }
+
   context.fillStyle = 'rgba(0, 255, 0, 0.4)'
   for(var i=0; i<computedPoints.length; ++i) {
     var p = computedPoints[i]
@@ -290,8 +332,12 @@ function draw() {
   }
   context.lineWidth = 1
 
+
+
   drawPSLG(redPoints, redEdges, 'red')
   drawPSLG(bluePoints, blueEdges, 'blue')
+
+
 }
 
 draw()
